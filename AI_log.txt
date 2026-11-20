@@ -1,0 +1,34 @@
+AI ALWAYS PROMPTED TO NOT GIVE .ZIP FILE AND INSTEAD EXPLAIN HOW/WHERE TO ADD CODE
+
+ASKED: ChatGPT was asked for a general outline (folder and file structure) for a web based game using webGL, js, and HTML.
+USED: I used the outline given by ChatGPT to create the folders and empty js files.
+
+ASKED: ChatGPT was given my personal code to render and rotate a 2D square in a 3D scene, with an orthographic camera. I then asked it to make the most basic classes to render a cube in the same manner as my code, but using the outline.
+USED: I copy pasted the very basic produced classes into the js files in /src/* and square_model.js. Once the code was pasted, the produced image looked identical to the personal code that I fed it.
+
+ASKED: ChatGPT was given previous code and asked to render a cube as well.
+USED: I added the cube vertices to cube_model.js and the buffer and drawCube function to renderer.js.
+
+ASKED: ChatGPT was asked to help add keyboard input and move the player one block at a time. I asked to have an animation with movement consisting of a +y jump and shear in the direction of movement.
+USED: I used the keyboard event handling in input.js and movement functions in player.js. The movement uses deltaTime to animate each step. The player model also bounces and shears during movement.
+
+ASKED: ChatGPT was asked to help make the orthographic camera follow the player.
+USED: I used the camera position and target calculations in camera.js. The camera follows the player using an offset, and the orthographic projection uses the window aspect ratio.
+
+ASKED: ChatGPT was asked to help add a cone light that follows the player.
+USED: I used the ConeLight class in light.js and the lighting uniforms in renderer.js. The light follows the player using an offset and points toward the player. The vertex shader uses inner and outer cutoff angles to fade the edge of the light.
+
+ASKED: ChatGPT was asked to help add vertex based Blinn-Phong lighting.
+USED: I used the normal, light, view, and halfway vector calculations in the vertex shader in index.html. I also used the normal matrix and material uniforms in renderer.js to control shininess and specular strength.
+
+ASKED: ChatGPT was asked to help subdivide the square and cube models for vertex based lighting.
+USED: I used recursive functions in square_model.js and cube_model.js to divide the faces into smaller triangles. The cube model also includes normal vectors for its faces.
+
+ASKED: ChatGPT was asked to help add outlines to the square and cube models.
+USED: I used separate outline vertices and LINE_LOOP draw calls in renderer.js. Polygon offset is used when drawing the filled faces with outlines.
+
+ASKED: ChatGPT was asked to help generate a cylinder using loops and add a function to draw it.
+USED: I used the vertex and normal generation in cylinder_model.js and added drawCylinder to renderer.js. The cylinder is used for the player's body.
+
+ASKED: ChatGPT was given my code and asked to add spheres using loops or recursion in a similar style to the other models. I asked it to reduce array buffer size and limit the number of drawArrays calls.
+USED: I used the sphere generation loops in sphere_model.js and added the sphere buffer and drawSphere function to renderer.js. The sphere uses TRIANGLE_STRIP with one draw call.
