@@ -3,6 +3,7 @@
 import {cube_vertices,cube_outline, cube_normals} from "../models/cube_model.js";
 import {square_vertices, square_outline} from "../models/square_model.js";
 import {cylinder_vertices, cylinder_normals} from "../models/cylinder_model.js";
+import { sphere_vertices, sphere_normals } from "../models/sphere_model.js";
 
 export class Renderer {
     constructor(gl) {
@@ -15,30 +16,32 @@ export class Renderer {
         this.cube_buffer = this.createModelBuffer(cube_vertices.concat(cube_outline).concat(cube_normals));
         this.square_buffer = this.createModelBuffer(square_vertices.concat(square_outline));
         this.cylinder_buffer = this.createModelBuffer(cylinder_vertices.concat(cylinder_normals));
+        this.sphere_buffer = this.createModelBuffer(sphere_vertices.concat(sphere_normals));
 
-        //initialize shader variables
+        //BEGIN UNIFORMS
         this.viewProjectionLoc = gl.getUniformLocation(this.program, "uViewProjection");
         this.positionLoc = gl.getAttribLocation(this.program, "aPosition");
         this.modelLoc = gl.getUniformLocation(this.program, "uModel");
-        this.colorLoc = gl.getUniformLocation(this.program, "uColor");
-        this.isDirectionalLoc = gl.getUniformLocation(this.program, "uIsDirectional");
 
-        //BEGIN SHADER VARIABLES FOR LIGHTING
+        //BEGIN LIGHTING/SHADING
+        this.colorLoc = gl.getUniformLocation(this.program, "uColor");
         this.normalLoc = gl.getAttribLocation(this.program, "aNormal");
         this.normalMatrixLoc = gl.getUniformLocation(this.program, "uNormalMatrix");
         this.lightPositionLoc = gl.getUniformLocation(this.program, "uLightPosition");
         this.lightColorLoc = gl.getUniformLocation(this.program, "uLightColor");
         this.ambientLoc = gl.getUniformLocation(this.program, "uAmbient");
+        this.kaLoc = gl.getUniformLocation(this.program, "uKa");
         this.useLightingLoc = gl.getUniformLocation(this.program, "uUseLighting");
         //conelighting
         this.lightDirectionLoc = gl.getUniformLocation(this.program, "uLightDirection");
         this.innerCutoffLoc = gl.getUniformLocation(this.program, "uInnerCutoff");
         this.outerCutoffLoc = gl.getUniformLocation(this.program, "uOuterCutoff");
-        //phong bling shading
+        //specular
         this.viewDirectionLoc = gl.getUniformLocation(this.program, "uViewDirection");
         this.shininessLoc = gl.getUniformLocation(this.program, "uShininess");
         this.specularStrengthLoc = gl.getUniformLocation(this.program, "uSpecularStrength");
-        //END LIGHTING
+        //END LIGHTING/SHADING
+        //END UNIFORMS
 
         //configure webGL for rendering
         gl.enable(gl.DEPTH_TEST);
@@ -48,23 +51,28 @@ export class Renderer {
         gl.frontFace(gl.CCW);
         gl.clearColor(0,0,0,1);
 
+        gl.uniform1f(this.kaLoc, 0);
+
     }
 
     //draw object functions
     drawPlayer(player) {
         const playerMatrix = player.buildModelMatrix();
 
+        // Head: bottom touches the shoulders at y = 1.3
+        let headMatrix = mult(playerMatrix, translate(0, 1.5, 0));
+        headMatrix = mult(headMatrix, scale(0.4, 0.4, 0.4));
+        this.drawSphere(headMatrix, vec4(0.76, 0.55, 0.38, 1), true, "full", 16, 0.2);
+
+        // Rounded shoulders: extend from y = 1.0 to y = 1.3
+        let shoulderMatrix = mult(playerMatrix, translate(0, 1.0, 0));
+        shoulderMatrix = mult(shoulderMatrix, scale(0.7, 0.6, 0.7));
+        this.drawSphere(shoulderMatrix, vec4(0.83, 0.58, 0.08, 1), true, "top", 16, 0.1);
+
         // Body
         let bodyMatrix = mult(playerMatrix, translate(0, 0.25, 0));
         bodyMatrix = mult(bodyMatrix, scale(0.7, 1.5, 0.7));
-
-        this.drawCylinder(bodyMatrix, vec4(0.83, 0.58, 0.08, 1), true, 16, 10);
-
-        // Head
-        let headMatrix = mult(playerMatrix, translate(0, 1.3, 0));
-        headMatrix = mult(headMatrix, scale(0.4, 0.4, 0.4));
-
-        this.drawCube(headMatrix, vec4(0.76, 0.55, 0.38, 1), true, 16, 0.2);
+        this.drawCylinder(bodyMatrix, vec4(0.83, 0.58, 0.08, 1), true, 16, 0.1);
     }
 
     drawFloorPlanks(planks) {
@@ -187,6 +195,42 @@ export class Renderer {
         gl.uniform1f(this.specularStrengthLoc, specularStrength);
 
         gl.drawArrays(gl.TRIANGLES, 0, cylinder_vertices.length);
+    }
+
+    drawSphere(modelMatrix, color, lighting=true, section="full", shininess=32, specularStrength=0.5) {
+       const gl = this.gl;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.sphere_buffer);
+
+        gl.vertexAttribPointer(this.positionLoc, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(this.positionLoc);
+
+        // Normals follow the positions.
+        const normalOffset =
+            sphere_vertices.length * 3 * Float32Array.BYTES_PER_ELEMENT;
+
+        gl.vertexAttribPointer(this.normalLoc, 3, gl.FLOAT, false, 0, normalOffset);
+        gl.enableVertexAttribArray(this.normalLoc);
+
+        gl.uniformMatrix4fv(this.modelLoc, false, flatten(modelMatrix));
+        gl.uniformMatrix3fv(this.normalMatrixLoc, false, flatten(normalMatrix(modelMatrix)));
+
+        gl.uniform4fv(this.colorLoc, flatten(color));
+        gl.uniform1i(this.useLightingLoc, lighting ? 1 : 0);
+        gl.uniform1f(this.shininessLoc, shininess);
+        gl.uniform1f(this.specularStrengthLoc, specularStrength);
+
+        switch (section) {
+            case "full":
+                gl.drawArrays(gl.TRIANGLES, 0, sphere_vertices.length);
+                break;
+            case "top":
+                gl.drawArrays(gl.TRIANGLES, 0, sphere_vertices.length/2);
+                break;
+            case "bottom":
+                gl.drawArrays(gl.TRIANGLES, sphere_vertices.length/2, sphere_vertices.length/2);
+                break;
+       }
     }
     
     //helper functions

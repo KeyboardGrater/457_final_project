@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+    <title>Random</title>
+
+    <style>
+        html {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #gl-canvas {
+            margin: 0 auto;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+    
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        #version 300 es
+
+        in vec4 aPosition;
+        in vec3 aNormal;
+
+        uniform mat4 uModel;
+        uniform mat4 uViewProjection;
+
+        //for textureMapping
+        in vec2 aTexCoord;
+        out vec2 vTexCoord;
+        out vec3 vHighlight;
+
+        //for coloring and lighting
+        uniform mat3 uNormalMatrix;
+        uniform vec4 uColor;
+        uniform vec3 uLightPosition;
+        uniform vec3 uLightColor;
+        uniform float uAmbient;
+        uniform bool uUseLighting;
+        uniform vec3 uLightDirection;
+        uniform float uInnerCutoff;
+        uniform float uOuterCutoff;
+
+        //for 
+        uniform vec3 uViewDirection;
+        uniform float uShininess;
+        uniform float uSpecularStrength;
+
+        out vec4 vColor;
+
+        void main()
+        {
+            vTexCoord = aTexCoord;
+            vHighlight = vec3(0.0);
+            vec4 worldPosition = uModel * aPosition;
+
+            gl_Position = uViewProjection * worldPosition;
+
+            if (uUseLighting) {
+                vec3 N = normalize(uNormalMatrix * aNormal);
+                vec3 L = normalize(uLightPosition - worldPosition.xyz);
+
+                // Direction from this vertex toward the camera.
+                vec3 V = normalize(uViewDirection);
+
+                // Halfway direction between the light and camera.
+                vec3 H = normalize(L + V);
+
+                float diffuse = max(dot(N, L), 0.0);
+
+                // Only show highlights on surfaces facing the light.
+                float specular = 0.0;
+                if (diffuse > 0.0) {
+                    specular = pow(max(dot(N, H), 0.0), uShininess);
+                }
+
+                float alignment = dot(-L, normalize(uLightDirection));
+                float spotlight = smoothstep(
+                    uOuterCutoff,
+                    uInnerCutoff,
+                    alignment
+                );
+
+                vec3 lighting = vec3(uAmbient)
+                    + spotlight * diffuse * uLightColor;
+
+                vec3 highlight = spotlight * specular * uSpecularStrength * uLightColor;
+
+                vColor = vec4(uColor.rgb * lighting, uColor.a);
+                vHighlight = highlight;
+            } else {
+                vColor = uColor;
+            }
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        #version 300 es
+        precision mediump float;
+
+        in vec4 vColor;
+        in vec2 vTexCoord;
+        in vec3 vHighlight;
+
+        uniform sampler2D uTexture;
+        uniform bool uUseTexture;
+
+        out vec4 fColor;
+
+        void main()
+        {
+            vec4 surfaceColor = vColor;
+
+            if (uUseTexture) {
+                vec4 texColor = texture(uTexture, vTexCoord);
+                surfaceColor *= texColor;
+            }
+
+            fColor = vec4(
+                surfaceColor.rgb + vHighlight,
+                surfaceColor.a
+            );
+        }
+    </script>
+
+
+    <script src="lib/initShaders.js"></script>
+    <script src="lib/MVnew.js"></script>
+    <script type="module" src="src/main.js"></script>
+
+</head>
+
+<body>
+    <canvas id="gl-canvas">
+    Bad canvas element.
+    </canvas>
+</body>
+</html>

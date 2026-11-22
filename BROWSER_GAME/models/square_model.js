@@ -25,10 +25,10 @@ function divideSquare(a, b, c, d, depth) {
     const da = midpoint(d, a);
     const center = midpoint(a, c);
 
-    divideSquare(a, ab, center, da, depth - 1);
-    divideSquare(ab, b, bc, center, depth - 1);
-    divideSquare(center, bc, c, cd, depth - 1);
-    divideSquare(da, center, cd, d, depth - 1);
+    divideSquare(a, ab, center, da, depth-1);
+    divideSquare(ab, b, bc, center, depth-1);
+    divideSquare(center, bc, c, cd, depth-1);
+    divideSquare(da, center, cd, d, depth-1);
 }
 
 function midpoint(a, b) {

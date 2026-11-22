@@ -37,23 +37,30 @@
         uniform mat4 uModel;
         uniform mat4 uViewProjection;
 
-        //for coloring and lighting
+        //FOR LIGHTING/COLORING
+        uniform bool uUseLighting;
+
         uniform mat3 uNormalMatrix;
         uniform vec4 uColor;
         uniform vec3 uLightPosition;
         uniform vec3 uLightColor;
-        uniform float uAmbient;
-        uniform bool uUseLighting;
+
+        //for spotlight/cone light
         uniform vec3 uLightDirection;
         uniform float uInnerCutoff;
         uniform float uOuterCutoff;
 
-        //for 
+        //for ambient lighting
+        uniform float uAmbient;
+        uniform float uKa;
+
+        //for specular lighting
         uniform vec3 uViewDirection;
         uniform float uShininess;
         uniform float uSpecularStrength;
 
         out vec4 vColor;
+        //END LIGHTING/COLORING
 
         void main()
         {
@@ -86,8 +93,7 @@
                     alignment
                 );
 
-                vec3 lighting = vec3(uAmbient)
-                    + spotlight * diffuse * uLightColor;
+                vec3 lighting = vec3(uAmbient) + spotlight * diffuse * uLightColor;
 
                 vec3 highlight = spotlight * specular * uSpecularStrength * uLightColor;
 

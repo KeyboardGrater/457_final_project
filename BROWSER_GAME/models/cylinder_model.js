@@ -3,8 +3,8 @@
 export const cylinder_vertices = [];
 export const cylinder_normals = [];
 
-const segments = 100;     // Divisions around the cylinder
-const heightSteps = 5;   // Divisions vertically for per-vertex lighting
+const segments = 200;     // Divisions around the cylinder
+const heightSteps = 3;   // Divisions vertically for per-vertex lighting
 const radius = 0.5;
 const height = 1;
 
